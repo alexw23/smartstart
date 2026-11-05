@@ -6,6 +6,10 @@ name: Release
 # Not marked as a pre-release: the Marketplace/HACS ignore pre-releases and fall
 # back to the latest commit, which shows a commit hash instead of the version.
 # "Beta" is stated in the README instead.
+#
+# Tests and Validate run again on the tagged commit and the release only
+# publishes if both pass, so a tag can never ship ahead of (or despite) a
+# failing check.
 on:
   push:
     tags:
@@ -15,7 +19,14 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  validate:
+    uses: ./.github/workflows/validate.yml
+
   release:
+    needs: [tests, validate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
