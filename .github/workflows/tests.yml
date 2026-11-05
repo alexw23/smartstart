@@ -1,0 +1,25 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: custom_components/smartstart/requirements_test.txt
+      - name: Install test dependencies
+        run: pip install -r custom_components/smartstart/requirements_test.txt
+      - name: Run tests
+        # python -m puts the repo root on sys.path so `custom_components.smartstart` imports.
+        run: python -m pytest custom_components/smartstart/tests -o asyncio_mode=auto -q
