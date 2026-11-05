@@ -25,7 +25,7 @@
           "start_service": "Start service or button entity (e.g. script.start_dishwasher, button.start_wash)",
           "stop_service": "Stop service or button entity (optional) — fired when Stop is pressed, e.g. to cancel a delayed start on the appliance",
           "delay_handling": "How does your appliance handle delayed starts?",
-          "balanced_target_rate": "Balanced target rate (£/kWh) — Balanced mode picks the soonest window at or below this rate",
+          "balanced_target_rate": "Balanced target rate (currency/kWh) — Balanced mode picks the soonest window at or below this rate",
           "delay_step_minutes": "Delay step (minutes) — minimum delay increment your appliance accepts. 1 = any minute · 15 / 30 = quarter / half-hour · 60 = LG-style whole-hour reservation.",
           "min_delay_minutes": "Minimum delay (minutes, 0 = start any time)",
           "max_delay_minutes": "Maximum delay (minutes, 1440 = up to 24 h ahead)",
@@ -72,7 +72,7 @@
           "bedtime": "Bedtime — no changeovers planned from here…",
           "wake_time": "…until wake time (same as bedtime = always available)",
           "max_wet_wait_hours": "Max hours washed laundry may wait for the dryer (0 = no limit)",
-          "time_value_per_hour": "Value of an hour (£) — the load-order optimiser picks the order with the lowest cost + this much per hour until everything's done (0 = cheapest only)"
+          "time_value_per_hour": "Value of an hour (currency) — the load-order optimiser picks the order with the lowest cost + this much per hour until everything's done (0 = cheapest only)"
         }
       }
     },
@@ -91,9 +91,9 @@
       "edit_global": {
         "title": "Global Settings",
         "data": {
-          "prefer_sooner_diff": "Minimum saving to defer (£/kWh)",
-          "cheap_window_threshold": "Cheap-window event threshold (£/kWh) — fires smartstart_cheap_window when best rate drops below this",
-          "reschedule_min_saving": "Reschedule alert threshold (£/kWh) — fires smartstart_better_window_found when a scheduled cycle could be moved to save this much per kWh",
+          "prefer_sooner_diff": "Minimum saving to defer (currency/kWh)",
+          "cheap_window_threshold": "Cheap-window event threshold (currency/kWh) — fires smartstart_cheap_window when best rate drops below this",
+          "reschedule_min_saving": "Reschedule alert threshold (currency/kWh) — fires smartstart_better_window_found when a scheduled cycle could be moved to save this much per kWh",
           "rates_expected_at": "Next-day rates expected at (local time) — e.g. 16:00 for Octopus Agile",
           "hold_engage_lead_minutes": "Hold engage lead (minutes) — only hold for tomorrow's rates when the release is at most this far away",
           "blackout_calendars": "Power-down calendars — calendar entities whose events are periods to keep cycles out of (Octopus power-down and saving sessions are detected automatically). Each appliance's Power-down Windows select chooses Avoid or Ignore. Clear to turn off."
@@ -107,7 +107,7 @@
           "start_service": "Start service or button entity",
           "stop_service": "Stop service or button entity (optional) — fired when Stop is pressed, e.g. to cancel a delayed start on the appliance",
           "delay_handling": "How does your appliance handle delayed starts?",
-          "balanced_target_rate": "Balanced target rate (£/kWh) — Balanced mode picks the soonest window at or below this rate",
+          "balanced_target_rate": "Balanced target rate (currency/kWh) — Balanced mode picks the soonest window at or below this rate",
           "delay_step_minutes": "Delay step (minutes) — minimum delay increment your appliance accepts. 1 = any minute · 15 / 30 = quarter / half-hour · 60 = LG-style whole-hour reservation.",
           "min_delay_minutes": "Minimum delay (minutes)",
           "max_delay_minutes": "Maximum delay (minutes)",
@@ -130,7 +130,7 @@
           "start_service": "Start service or button entity",
           "stop_service": "Stop service or button entity (optional) — fired when Stop is pressed, e.g. to cancel a delayed start on the appliance",
           "delay_handling": "How does your appliance handle delayed starts?",
-          "balanced_target_rate": "Balanced target rate (£/kWh) — Balanced mode picks the soonest window at or below this rate",
+          "balanced_target_rate": "Balanced target rate (currency/kWh) — Balanced mode picks the soonest window at or below this rate",
           "delay_step_minutes": "Delay step (minutes) — minimum delay increment your appliance accepts. 1 = any minute · 15 / 30 = quarter / half-hour · 60 = LG-style whole-hour reservation.",
           "min_delay_minutes": "Minimum delay (minutes)",
           "max_delay_minutes": "Maximum delay (minutes)",
@@ -193,7 +193,7 @@
           "bedtime": "Bedtime — no changeovers planned from here…",
           "wake_time": "…until wake time (same as bedtime = always available)",
           "max_wet_wait_hours": "Max hours washed laundry may wait for the dryer (0 = no limit)",
-          "time_value_per_hour": "Value of an hour (£) — the load-order optimiser picks the order with the lowest cost + this much per hour until everything's done (0 = cheapest only)"
+          "time_value_per_hour": "Value of an hour (currency) — the load-order optimiser picks the order with the lowest cost + this much per hour until everything's done (0 = cheapest only)"
         }
       },
       "laundry_flow_name": {

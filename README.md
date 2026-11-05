@@ -1,26 +1,69 @@
 # SmartStart
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/your-repo/smartstart.svg)](https://github.com/your-repo/smartstart/releases)
-[![License](https://img.shields.io/github/license/your-repo/smartstart.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/alexw23/smartstart.svg)](https://github.com/alexw23/smartstart/releases)
+[![License](https://img.shields.io/github/license/alexw23/smartstart.svg)](LICENSE)
 
-Energy-aware appliance scheduler for Home Assistant. SmartStart watches your electricity tariff rates and delays appliances (washing machine, dishwasher, EV charger, etc.) until the cheapest window — automatically.
+**Run your appliances when electricity is cheapest.** SmartStart is a [Home Assistant](https://www.home-assistant.io/)
+custom integration that schedules your dishwasher, washing machine, dryer, EV charger or anything else Home Assistant
+can start around **dynamic energy pricing**: Octopus Agile and similar time-of-use tariffs, or any rate data you feed it.
 
----
+> [!WARNING]
+> **Beta software.** SmartStart is under active development: settings, entities and behaviour can change between
+> releases, and it has not been tested across many homes, tariffs or appliances. It starts real appliances. Try it
+> on one device first, and keep an eye on what it schedules.
 
-## Features
+> [!NOTE]
+> **Built with AI assistance.** Much of this project was written with [Claude](https://claude.com/claude-code), an AI
+> coding assistant. It runs in its author's own home, but treat it like any young open-source project: read what it
+> does before you trust it, and report anything odd.
 
-- Finds the cheapest contiguous rate window within your configured horizon
-- Respects a **Finish By** deadline (e.g. "done before 7 am")
-- **Start Now** button to bypass rate optimisation when you need it immediately
-- **Start Anytime** button to defer to the cheapest window at any time
-- Native Octopus Energy integration (auto-detects your Agile/Flux rate entities)
-- Manual rate injection via `smartstart.publish_rates` for any other provider
-- Supports both script-native delay (`delay_seconds`) and SmartStart-managed timers
-- Per-device sensors: status, scheduled start, estimated finish, savings %, estimated cost, current rate, best window
-- **Power-down windows** — never schedules a cycle over an Octopus Octoplus power-down or saving session (or any calendar you choose); see below
-- **Offers** — while a cycle is scheduled, a much cheaper window it can't reach by itself (forecast slots, or past its max delay) is offered for one-tap acceptance (see below)
-- **Laundry pair** — chain wash → dry across two appliances and schedule the whole plan as one unit (see below)
+## What it does
+
+- **Finds the cheapest window.** Give it a cycle's duration and energy use and it picks the cheapest contiguous slot
+  inside your limits, then starts the appliance then, using the appliance's own delayed start or a timer SmartStart
+  manages itself. Optional **Finish by** deadlines, a **Start now** override, and three modes: *Max Savings*,
+  *Balanced* (soonest acceptable window) and *Now*.
+- **Understands your tariff.** Octopus Energy rates are picked up automatically (see [Rate providers](#rate-providers));
+  anything else can be pushed in with the `smartstart.publish_rates` service, and forecasts with
+  `smartstart.publish_predicted_rates`. When new rates land, scheduled runs can move to a cheaper window by themselves,
+  or near the daily release SmartStart can hold for tomorrow's prices.
+- **Negative prices and solar.** Rates are just numbers per slot, so negative prices naturally become the best
+  windows, and forecast negative prices can be published ahead of time. SmartStart has no solar integration of its own,
+  but you can use the same service to publish a rate curve where sunny, surplus-solar slots are cheap (or negative)
+  and it will pull cycles into them.
+- **Keeps out of power-downs.** Octopus Octoplus power-down events and saving sessions are discovered automatically
+  (any calendar entity works), and each appliance chooses to *Avoid* them or *Ignore* them. See
+  [Power-down windows](#power-down-windows-octopus-octoplus-and-other-calendars).
+- **Plans your laundry.** A [laundry pair](#laundry-pair-wash--dry-chaining) schedules wash then dry as one plan: it
+  orders your loads to cost the least, waits for changeovers around your sleep and away times, and splits the plan
+  around power-downs. Define **flows** (e.g. "Bed linen" = a wash plus a dry), set them to repeat every N days, and it
+  fills your plan when one is due. It records how often you *actually* run each flow and shows that against the
+  configured interval, so you can see whether your routine matches your plan and how often you can realistically run
+  the machines.
+- **Offers cheaper options.** If a much cheaper window exists that the current schedule can't reach (a forecast slot,
+  or past the appliance's own delay limit) you get a one-tap offer.
+- **Learns your appliances.** With an optional power sensor it learns each cycle's real duration and power curve,
+  and records runs, cost and savings.
+- **A sidebar panel** with rate charts, recommended windows, run history, cycle statistics and the laundry planner.
+
+## Good to know
+
+**Sleep windows are for laundry only.** A laundry pair never plans a changeover while you're asleep (default
+23:00-07:00, configurable per pair). Single appliances ignore it: a dishwasher can run at 3 a.m. because it needs
+nobody there.
+
+**Power monitoring is optional.** A power sensor lets SmartStart learn real cycle durations and curves, but everything
+works without one using the duration and kWh you enter. SmartStart only *reads* the sensor; it never switches
+power to an appliance. It only calls the start (and optional cancel) service you configure.
+
+> [!CAUTION]
+> **Adding power monitoring to an appliance carries risk, and managing that risk is your responsibility.** Fitting a
+> smart plug or inline meter adds a connection and, usually, a relay in the appliance's supply. Washing machines, dryers
+> and dishwashers draw a lot of current: use a device rated well above the appliance's maximum load, and prefer
+> **relay-free** monitoring (a clip-on CT clamp or a measurement-only meter) where you can. Do not use a relay to
+> switch an appliance off while it is running. SmartStart does not need you to, and does not do it for you. If you
+> are not sure, skip the power sensor.
 
 ---
 
@@ -137,7 +180,8 @@ wet-wait cap and real rates), Continue loads now and starts then ("Loaded — st
 fires `smartstart_laundry_step_stalled` (once) and shows on the panel.
 **Before you leave**: 45 min before an away period, `smartstart_laundry_leaving`
 carries the last changeover before you go and the next one after you're back.
-Pushes for changeover/offer/leaving/stalled live in `packages/laundry.yaml`.
+Notifications for changeover, offer, leaving and stalled steps are built from
+these events in your own automations.
 
 **Suggestions**: when a load costs ≥10p and ≥25% more in this plan than on its
 own after it (within 48 h), or when nothing fits your away times without dropping
@@ -223,11 +267,11 @@ Websocket API (used by the panel): `smartstart/overview`, `smartstart/runs`, `sm
 
 1. Open HACS in Home Assistant
 2. Go to **Integrations** → menu (⋮) → **Custom repositories**
-3. Add `https://github.com/your-repo/smartstart` with category **Integration**
+3. Add `https://github.com/alexw23/smartstart` with category **Integration**
 4. Search for **SmartStart** and click **Download**
 5. Restart Home Assistant
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=your-repo&repository=smartstart&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alexw23&repository=smartstart&category=integration)
 
 ### Manual
 
@@ -289,7 +333,7 @@ You can add multiple devices and multiple cycles per device via **Settings → D
 
 ### Octopus Energy (auto-detected)
 
-If the [Octopus Energy integration](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy) is installed, SmartStart will detect your `current_day_rates` and `next_day_rates` entities automatically and offer them as a provider option.
+If the [Octopus Energy integration](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy) is installed, SmartStart will detect your `current_day_rates` and `next_day_rates` event entities automatically and pre-fill them in setup. Nothing is tied to a particular account: it reads whichever Octopus entities your Home Assistant has. If you have more than one meter, it prefers electricity import over export and ignores gas, and the setup form lets you pick any other pair. The same integration's Octoplus power-down and saving-session calendars are detected too (see [Power-down windows](#power-down-windows-octopus-octoplus-and-other-calendars)).
 
 ### Manual / any other provider
 
@@ -308,6 +352,13 @@ data:
 ```
 
 Call this service whenever new rate data is available — SmartStart immediately re-scores windows and updates all sensors.
+Rates are plain numbers in your currency per kWh, so any tariff or signal works: other suppliers' time-of-use rates,
+wholesale prices, carbon intensity scaled to a pseudo-price, or a curve you build from a solar forecast.
+
+**Negative prices and solar.** Negative `rate_cost_per_kwh` values are fine and rank as the cheapest windows. To chase
+surplus solar, publish a forecast-driven curve (for example, make slots with expected export-limited sunshine cheap or
+negative, and the rest your normal import price) and SmartStart will schedule cycles into the sunny slots. This is a
+technique built on the generic service, not a built-in solar feature.
 
 ---
 
@@ -396,8 +447,7 @@ region code matches your Octopus tariff region) via a scheduled automation:
 #     url: "https://agileforecast.co.uk/api/H/?days=3"   # H = your region letter
 # then an automation (hourly is fine) maps the forecast slots — agile_pred /
 # agile_low / agile_high are p/kWh, divide by 100; skip is_published slots —
-# into smartstart.publish_predicted_rates. Working example:
-# packages/agile_forecast.yaml in the author's config.
+# into smartstart.publish_predicted_rates.
 service: smartstart.publish_predicted_rates
 data:
   rates:
@@ -534,8 +584,9 @@ In `native` mode the service payload contains:
 
 ## Contributing
 
-Pull requests are welcome. Please open an issue first for significant changes.
+Pull requests are welcome. Please open an issue first for significant changes. SmartStart is beta software, so bug
+reports with your tariff/provider, appliance type and the relevant Home Assistant log lines are especially useful.
 
 ## Licence
 
-MIT
+See [LICENSE](LICENSE).
