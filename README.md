@@ -589,4 +589,8 @@ reports with your tariff/provider, appliance type and the relevant Home Assistan
 
 ## Licence
 
-See [LICENSE](LICENSE).
+Copyright (C) 2026 alexw23
+
+SmartStart is free software, licensed under the [GNU General Public License v3.0](LICENSE). You may use, study,
+modify and share it, but anyone who distributes a modified version must release it under the same licence, with
+source. It comes with no warranty. Contributions are accepted under the same licence.
