@@ -31,6 +31,10 @@ SmartStart is installed from Home Assistant's Marketplace as a custom repository
 4. Search for **SmartStart** and click **Download**
 5. Restart Home Assistant
 
+[![Open your Home Assistant instance and show this repository in the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=alexw23&repository=smartstart&category=integration)
+
+The button above opens the repository in your Home Assistant. If you still use HACS, the steps are the same.
+
 **Manual install:** copy the `custom_components/smartstart` directory into your Home Assistant
 `custom_components/` folder and restart.
 
