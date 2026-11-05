@@ -3,6 +3,7 @@ name: Validate
 on:
   push:
   pull_request:
+  workflow_call:   # lets the release workflow require a green run on the tagged commit
   schedule:
     - cron: "0 5 * * 1"   # weekly: catches Home Assistant / HACS rule changes
 

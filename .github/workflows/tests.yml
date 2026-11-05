@@ -3,6 +3,7 @@ name: Tests
 on:
   push:
   pull_request:
+  workflow_call:   # lets the release workflow require a green run on the tagged commit
 
 permissions:
   contents: read
