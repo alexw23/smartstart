@@ -92,6 +92,9 @@ class BlackoutSource:
         self._on_change: Optional[Callable[[], None]] = None
         self._unsubs: List[Callable[[], None]] = []
         self._retry_unsub: Optional[Callable[[], None]] = None
+        # Calendars already warned about, so a long outage of the source
+        # integration (retries every RETRY_DELAY) logs once, not every retry.
+        self._warned: set = set()
 
     @property
     def entity_ids(self) -> List[str]:
@@ -152,9 +155,19 @@ class BlackoutSource:
                     blocking=True, return_response=True,
                 )
             except Exception as exc:  # noqa: BLE001 — a calendar outage must not break scoring
-                _LOGGER.warning("SmartStart: couldn't read blackout calendar %s: %s", entity_id, exc)
+                if entity_id not in self._warned:
+                    self._warned.add(entity_id)
+                    _LOGGER.warning(
+                        "SmartStart: couldn't read blackout calendar %s: %s (retrying every %ds, "
+                        "quietly, until it works)", entity_id, exc, RETRY_DELAY,
+                    )
+                else:
+                    _LOGGER.debug("SmartStart: blackout calendar %s still unreadable: %s", entity_id, exc)
                 failed = True
                 continue
+            if entity_id in self._warned:
+                self._warned.discard(entity_id)
+                _LOGGER.info("SmartStart: blackout calendar %s is readable again", entity_id)
             for event in ((resp or {}).get(entity_id) or {}).get("events", []):
                 start, end = _to_dt(event.get("start")), _to_dt(event.get("end"))
                 if start is not None and end is not None:
