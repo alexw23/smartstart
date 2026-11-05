@@ -80,19 +80,30 @@ def _slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
 
+def _octopus_candidates(hass, suffix: str) -> list[str]:
+    """Octopus Energy rate entities ending in `suffix`, best first: electricity
+    import before export, gas last. Sorted so the pick is stable. The setup
+    form still lets the user choose any other entity."""
+    found = sorted(
+        s.entity_id for s in hass.states.async_all()
+        if "octopus" in s.entity_id and suffix in s.entity_id
+    )
+
+    def rank(entity_id: str) -> int:
+        if "_gas_" in entity_id:
+            return 2
+        if "export" in entity_id:
+            return 1
+        return 0
+
+    return sorted(found, key=rank)
+
+
 def _detect_octopus(hass) -> Optional[Dict[str, str]]:
     if hass is None:
         return None
-    current = next(
-        (s.entity_id for s in hass.states.async_all()
-         if "octopus" in s.entity_id and "current_day_rates" in s.entity_id),
-        None,
-    )
-    nxt = next(
-        (s.entity_id for s in hass.states.async_all()
-         if "octopus" in s.entity_id and "next_day_rates" in s.entity_id),
-        None,
-    )
+    current = next(iter(_octopus_candidates(hass, "current_day_rates")), None)
+    nxt = next(iter(_octopus_candidates(hass, "next_day_rates")), None)
     return {"current": current, "next": nxt} if current and nxt else None
 
 
