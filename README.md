@@ -1,3 +1,5 @@
+![SmartStart: run your appliances when electricity is cheapest. A Home Assistant integration.](docs/images/header.png)
+
 # SmartStart
 
 [![GitHub Release](https://img.shields.io/github/release/alexw23/smartstart.svg)](https://github.com/alexw23/smartstart/releases)
