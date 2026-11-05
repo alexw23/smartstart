@@ -3,6 +3,9 @@ name: Release
 # Tag a version (git tag v0.2.0 && git push origin v0.2.0) and this publishes a
 # GitHub release with generated notes. HACS installs the tagged source, so no
 # zip is needed. The tag must match the version in manifest.json.
+# Not marked as a pre-release: the Marketplace/HACS ignore pre-releases and fall
+# back to the latest commit, which shows a commit hash instead of the version.
+# "Beta" is stated in the README instead.
 on:
   push:
     tags:
@@ -26,4 +29,4 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" --prerelease
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" --latest
