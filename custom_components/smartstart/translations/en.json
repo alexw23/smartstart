@@ -1,0 +1,230 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SmartStart — Setup",
+        "description": "What do you want to set up?",
+        "data": {
+          "setup_type": "Setup type"
+        }
+      },
+      "octopus_config": {
+        "title": "Octopus Energy — Rate Entities",
+        "description": "Confirm the Octopus Energy event entity IDs for current and next-day rates.",
+        "data": {
+          "current_day_entity": "Current day rates entity",
+          "next_day_entity": "Next day rates entity"
+        }
+      },
+      "add_device": {
+        "title": "Add Appliance",
+        "description": "Configure the appliance SmartStart will schedule.",
+        "data": {
+          "name": "Name",
+          "icon": "Icon (mdi:…)",
+          "start_service": "Start service or button entity (e.g. script.start_dishwasher, button.start_wash)",
+          "stop_service": "Stop service or button entity (optional) — fired when Stop is pressed, e.g. to cancel a delayed start on the appliance",
+          "delay_handling": "How does your appliance handle delayed starts?",
+          "balanced_target_rate": "Balanced target rate (£/kWh) — Balanced mode picks the soonest window at or below this rate",
+          "delay_step_minutes": "Delay step (minutes) — minimum delay increment your appliance accepts. 1 = any minute · 15 / 30 = quarter / half-hour · 60 = LG-style whole-hour reservation.",
+          "min_delay_minutes": "Minimum delay (minutes, 0 = start any time)",
+          "max_delay_minutes": "Maximum delay (minutes, 1440 = up to 24 h ahead)",
+          "max_wait_hours": "Wait at most (hours from pressing Start) — auto-reschedule and offers can push the run as late as finishing this long after you pressed Start, never later (0 = use max delay)",
+          "auto_reschedule": "Auto-reschedule — when new rates reveal a cheaper window (still within max delay / due date of the original schedule), move the schedule automatically and fire smartstart_cycle_rescheduled",
+          "offers": "Offer cheaper windows — when a forecast or out-of-reach window would save at least 10p and 25%, surface it as an offer (sensor, Accept Offer button, smartstart_offer_found event) instead of only taking what the schedule can reach",
+          "hold_for_next_day_rates": "Hold for tomorrow's rates — near the daily rate release, commit to a placeholder window after the release time and re-optimise automatically when rates arrive (requires auto-reschedule)",
+          "running_entity": "Running sensor entity",
+          "running_states": "Running state values — type each value (e.g. Washing, Rinse, Spin). Matched against raw and translated states, case-insensitive.",
+          "paused_entity": "Paused sensor entity (optional — defaults to running entity)",
+          "paused_states": "Paused state values (optional) — pauses cycle tracking while matched",
+          "power_sensor": "Power sensor entity (optional — used to learn power curve)"
+        }
+      },
+      "add_cycle": {
+        "title": "Add Cycle — {device}",
+        "description": "Add a programme. You can add more after setup via Options.",
+        "data": {
+          "name": "Cycle name (e.g. Eco 50°C, Cotton 60°C)",
+          "cycle_id": "Cycle ID (optional) — sent to your start script. Falls back to cycle name if blank.",
+          "duration_minutes": "Estimated duration (minutes)",
+          "total_kwh": "Estimated energy use (kWh)",
+          "add_another": "Add another cycle"
+        }
+      },
+      "provider": {
+        "title": "SmartStart — Setup",
+        "description": "Pick a rate provider. Currency is taken from your Home Assistant locale.",
+        "data": {
+          "provider": "Rate provider"
+        }
+      },
+      "laundry": {
+        "title": "Laundry Pair",
+        "description": "Pair a washer and dryer so wash → dry plans are scheduled as one unit. Only the washer is machine-commanded; each later step waits for your changeover confirm.",
+        "data": {
+          "name": "Name",
+          "washer_slug": "Washer (SmartStart device)",
+          "dryer_slug": "Dryer (SmartStart device)",
+          "gap_minutes": "Changeover gap (minutes) — human allowance between steps",
+          "max_wait_hours": "Wait at most (hours from pressing Start) — auto-reschedule and offers can push the run as late as finishing this long after you pressed Start, never later (0 = use max delay)",
+          "auto_reschedule": "Auto-reschedule — move a scheduled plan to a cheaper window as new rates arrive",
+          "hold_for_next_day_rates": "Hold for next-day rates (appears once auto-reschedule is saved on)",
+          "bedtime": "Bedtime — no changeovers planned from here…",
+          "wake_time": "…until wake time (same as bedtime = always available)",
+          "max_wet_wait_hours": "Max hours washed laundry may wait for the dryer (0 = no limit)",
+          "time_value_per_hour": "Value of an hour (£) — the load-order optimiser picks the order with the lowest cost + this much per hour until everything's done (0 = cheapest only)"
+        }
+      }
+    },
+    "error": {
+      "unknown": "Unexpected error"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SmartStart — Options",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "edit_global": {
+        "title": "Global Settings",
+        "data": {
+          "prefer_sooner_diff": "Minimum saving to defer (£/kWh)",
+          "cheap_window_threshold": "Cheap-window event threshold (£/kWh) — fires smartstart_cheap_window when best rate drops below this",
+          "reschedule_min_saving": "Reschedule alert threshold (£/kWh) — fires smartstart_better_window_found when a scheduled cycle could be moved to save this much per kWh",
+          "rates_expected_at": "Next-day rates expected at (local time) — e.g. 16:00 for Octopus Agile",
+          "hold_engage_lead_minutes": "Hold engage lead (minutes) — only hold for tomorrow's rates when the release is at most this far away",
+          "blackout_calendars": "Power-down calendars — calendar entities whose events are periods to keep cycles out of (Octopus power-down and saving sessions are detected automatically). Each appliance's Power-down Windows select chooses Avoid or Ignore. Clear to turn off."
+        }
+      },
+      "add_device": {
+        "title": "Add Appliance",
+        "data": {
+          "name": "Name",
+          "icon": "Icon (mdi:…)",
+          "start_service": "Start service or button entity",
+          "stop_service": "Stop service or button entity (optional) — fired when Stop is pressed, e.g. to cancel a delayed start on the appliance",
+          "delay_handling": "How does your appliance handle delayed starts?",
+          "balanced_target_rate": "Balanced target rate (£/kWh) — Balanced mode picks the soonest window at or below this rate",
+          "delay_step_minutes": "Delay step (minutes) — minimum delay increment your appliance accepts. 1 = any minute · 15 / 30 = quarter / half-hour · 60 = LG-style whole-hour reservation.",
+          "min_delay_minutes": "Minimum delay (minutes)",
+          "max_delay_minutes": "Maximum delay (minutes)",
+          "max_wait_hours": "Wait at most (hours from pressing Start) — auto-reschedule and offers can push the run as late as finishing this long after you pressed Start, never later (0 = use max delay)",
+          "auto_reschedule": "Auto-reschedule — when new rates reveal a cheaper window (still within max delay / due date of the original schedule), move the schedule automatically and fire smartstart_cycle_rescheduled",
+          "offers": "Offer cheaper windows — when a forecast or out-of-reach window would save at least 10p and 25%, surface it as an offer (sensor, Accept Offer button, smartstart_offer_found event) instead of only taking what the schedule can reach",
+          "hold_for_next_day_rates": "Hold for tomorrow's rates — near the daily rate release, commit to a placeholder window after the release time and re-optimise automatically when rates arrive (requires auto-reschedule)",
+          "running_entity": "Running sensor entity",
+          "running_states": "Running state values",
+          "paused_entity": "Paused sensor entity (optional)",
+          "paused_states": "Paused state values (optional)",
+          "power_sensor": "Power sensor entity (optional)"
+        }
+      },
+      "edit_device": {
+        "title": "Edit Appliance",
+        "data": {
+          "name": "Name",
+          "icon": "Icon",
+          "start_service": "Start service or button entity",
+          "stop_service": "Stop service or button entity (optional) — fired when Stop is pressed, e.g. to cancel a delayed start on the appliance",
+          "delay_handling": "How does your appliance handle delayed starts?",
+          "balanced_target_rate": "Balanced target rate (£/kWh) — Balanced mode picks the soonest window at or below this rate",
+          "delay_step_minutes": "Delay step (minutes) — minimum delay increment your appliance accepts. 1 = any minute · 15 / 30 = quarter / half-hour · 60 = LG-style whole-hour reservation.",
+          "min_delay_minutes": "Minimum delay (minutes)",
+          "max_delay_minutes": "Maximum delay (minutes)",
+          "max_wait_hours": "Wait at most (hours from pressing Start) — auto-reschedule and offers can push the run as late as finishing this long after you pressed Start, never later (0 = use max delay)",
+          "auto_reschedule": "Auto-reschedule — when new rates reveal a cheaper window (still within max delay / due date of the original schedule), move the schedule automatically and fire smartstart_cycle_rescheduled",
+          "offers": "Offer cheaper windows — when a forecast or out-of-reach window would save at least 10p and 25%, surface it as an offer (sensor, Accept Offer button, smartstart_offer_found event) instead of only taking what the schedule can reach",
+          "hold_for_next_day_rates": "Hold for tomorrow's rates — near the daily rate release, commit to a placeholder window after the release time and re-optimise automatically when rates arrive (requires auto-reschedule)",
+          "running_entity": "Running sensor entity",
+          "running_states": "Running state values",
+          "paused_entity": "Paused sensor entity (optional)",
+          "paused_states": "Paused state values (optional)",
+          "power_sensor": "Power sensor entity (optional)",
+          "action": "Action"
+        }
+      },
+      "edit_cycle": {
+        "title": "Edit Cycle — {device}",
+        "description": "Update the cycle name, duration, and energy use.",
+        "data": {
+          "name": "Cycle name",
+          "cycle_id": "Cycle ID (optional) — sent to your start script. Falls back to cycle name if blank.",
+          "duration_minutes": "Duration (minutes)",
+          "total_kwh": "Energy use (kWh)"
+        }
+      },
+      "add_cycle": {
+        "title": "Add Cycle — {device}",
+        "data": {
+          "name": "Cycle name",
+          "cycle_id": "Cycle ID (optional) — sent to your start script. Falls back to cycle name if blank.",
+          "duration_minutes": "Duration (minutes)",
+          "total_kwh": "Energy use (kWh)",
+          "add_another": "Add another cycle"
+        }
+      },
+      "view_debug": {
+        "title": "Debug",
+        "description": "{debug}",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "laundry_init": {
+        "title": "Laundry Pair — Options",
+        "description": "{flows}",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "laundry_pair": {
+        "title": "Pair Settings",
+        "data": {
+          "name": "Name",
+          "washer_slug": "Washer (SmartStart device)",
+          "dryer_slug": "Dryer (SmartStart device)",
+          "gap_minutes": "Changeover gap (minutes) — human allowance between steps",
+          "max_wait_hours": "Wait at most (hours from pressing Start) — auto-reschedule and offers can push the run as late as finishing this long after you pressed Start, never later (0 = use max delay)",
+          "auto_reschedule": "Auto-reschedule — move a scheduled plan to a cheaper window as new rates arrive",
+          "hold_for_next_day_rates": "Hold for next-day rates (appears once auto-reschedule is saved on)",
+          "bedtime": "Bedtime — no changeovers planned from here…",
+          "wake_time": "…until wake time (same as bedtime = always available)",
+          "max_wet_wait_hours": "Max hours washed laundry may wait for the dryer (0 = no limit)",
+          "time_value_per_hour": "Value of an hour (£) — the load-order optimiser picks the order with the lowest cost + this much per hour until everything's done (0 = cheapest only)"
+        }
+      },
+      "laundry_flow_name": {
+        "title": "New Flow",
+        "description": "Name this flow (e.g. Linen Sheets). You'll add its steps next.",
+        "data": {
+          "name": "Flow name",
+          "repeat_days": "Repeat every N days (0 = off) — when due, auto-fills the next empty Load with the due date as its deadline",
+          "overnight": "In use overnight (e.g. bed linen) — only start its first wash once I'm up, never loaded the night before"
+        }
+      },
+      "laundry_flow_step": {
+        "title": "Flow Step",
+        "description": "Step {position} of “{flow}”. Steps run in list order: same-machine steps queue, a dry waits for every wash before it.",
+        "data": {
+          "cycle": "Cycle",
+          "confirm_before": "Wait for changeover confirm before this step (off = auto-fire, e.g. re-running the dryer on the same load)",
+          "duration_override": "Duration override (minutes, 0 = use the cycle's configured/learned duration)",
+          "kwh_override": "Energy override (kWh, 0 = use the cycle's configured energy)",
+          "add_another": "Add another step"
+        }
+      },
+      "laundry_edit_flow": {
+        "title": "Edit Flow",
+        "description": "**{flow}**\n\n{steps}",
+        "data": {
+          "action": "Action",
+          "repeat_days": "Repeat every N days (0 = off)",
+          "overnight": "In use overnight (e.g. bed linen) — only start its first wash once I'm up, never loaded the night before"
+        }
+      }
+    }
+  }
+}

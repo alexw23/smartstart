@@ -1,0 +1,187 @@
+publish_rates:
+  name: Publish Rates
+  description: >
+    Push electricity rate periods into SmartStart. Use this with any provider
+    that is not auto-detected (solar export, custom tariffs, other APIs).
+  fields:
+    rates:
+      name: Rates
+      description: >
+        List of rate periods. Each entry must have start (ISO-8601), end (ISO-8601),
+        and rate_cost_per_kwh (float, currency-agnostic).
+      required: true
+      example:
+        - start: "2026-06-27T00:00:00Z"
+          end: "2026-06-27T00:30:00Z"
+          rate_cost_per_kwh: 0.19
+
+publish_predicted_rates:
+  name: Publish Predicted Rates
+  description: >
+    Push forecast rate periods into SmartStart (e.g. from agileforecast.co.uk).
+    Predictions are only used while a device is holding for tomorrow's rates:
+    they let the placeholder be pre-positioned on a likely-cheap slot beyond
+    the real rate horizon. Real rates always win — when they are published,
+    the schedule is re-checked against actuals and rescheduled if needed.
+    Not persisted across restarts; re-push from your automation.
+  fields:
+    rates:
+      name: Predicted rates
+      description: >
+        List of predicted rate periods, same shape as publish_rates: start
+        (ISO-8601), end (ISO-8601), rate_cost_per_kwh (float, the central
+        estimate). Optional rate_low_per_kwh / rate_high_per_kwh carry the
+        forecast band: holds price predicted slots at the high bound, and the
+        Best Windows list shows the band.
+      required: true
+      example:
+        - start: "2026-06-28T03:00:00Z"
+          end: "2026-06-28T03:30:00Z"
+          rate_cost_per_kwh: -0.01
+          rate_low_per_kwh: -0.05
+          rate_high_per_kwh: 0.04
+
+start:
+  name: Start
+  description: >
+    Schedule a device to run. Without options, SmartStart picks the cheapest
+    available window. Pass finish_by to constrain to a deadline, or now: true
+    to bypass rate optimisation and start immediately.
+  fields:
+    device_slug:
+      name: Device
+      description: Slug identifier of the SmartStart device.
+      required: true
+      selector:
+        text:
+    cycle_id:
+      name: Cycle
+      description: Cycle ID to run (as configured on the device).
+      required: true
+      selector:
+        text:
+    start_at:
+      name: Start at
+      description: >
+        ISO-8601 start time of a specific window to run in (e.g. a Best Windows
+        row). Priced on real + forecast rates; becomes the run's limit, so
+        auto-reschedule only moves it to something cheaper finishing no later.
+        Targets past the appliance's max delay are re-sent once in reach.
+      required: false
+      selector:
+        text:
+    finish_by:
+      name: Finish By
+      description: >
+        ISO-8601 datetime by which the cycle must finish. SmartStart will pick
+        the cheapest window that completes before this time.
+      selector:
+        text:
+    now:
+      name: Start Now
+      description: >
+        If true, start immediately without rate optimisation. Equivalent to
+        pressing the Start Now button.
+      default: false
+      selector:
+        boolean:
+
+stop:
+  name: Stop
+  description: >
+    Stop a scheduled or running cycle for a device. Calls the device's
+    stop_service if configured (e.g. to cancel a delayed start on the
+    appliance), then clears the SmartStart schedule state.
+  fields:
+    device_slug:
+      name: Device
+      description: Slug identifier of the SmartStart device.
+      required: true
+      selector:
+        text:
+
+accept_offer:
+  name: Accept offer
+  description: >
+    Move a scheduled cycle to the device's current offer — a cheaper window
+    the schedule couldn't reach by itself (forecast slots, or beyond its
+    original max delay). Widens the run's limit to the offer's finish; it
+    keeps re-checking against real rates afterwards. Fails if there is no
+    offer. See sensor.<device>_offer. Pass a laundry pair's slug (e.g.
+    laundry) to accept the pair's plan offer.
+  fields:
+    device_slug:
+      name: Device
+      description: Slug identifier of the SmartStart device.
+      required: true
+      selector:
+        text:
+
+start_laundry:
+  name: Start Laundry
+  description: >
+    Start a laundry-pair run. By default runs the plan currently set on the
+    pair's Load row selects; pass an explicit step list for shapes the row UI
+    can't express. Steps run in list order — same-machine steps queue, and a
+    dry waits for every wash listed before it. Row plans are reordered by the
+    load-order optimiser unless the pair's Load Order is "As listed"; an
+    explicit step list never is.
+  fields:
+    pair:
+      name: Pair
+      description: Laundry pair slug or name. Optional when only one pair exists.
+      selector:
+        text:
+    steps:
+      name: Steps
+      description: >
+        Explicit ordered step list (overrides the Load row selects). Each step:
+        machine (wash/dry), cycle_key, optional confirm_before (default true;
+        false = fires without a changeover confirm), optional duration_minutes
+        and kwh overrides.
+      selector:
+        object:
+    mode:
+      name: Scheduling Mode
+      description: Override the pair's scheduling mode for this run (now / balanced / max_savings).
+      selector:
+        select:
+          options:
+            - now
+            - balanced
+            - max_savings
+    finish_by:
+      name: Finish By
+      description: ISO-8601 deadline for the END of the whole plan (the last dry).
+      selector:
+        text:
+    start_at:
+      name: Start At
+      description: >
+        ISO-8601 start for the plan (e.g. a Best Windows row). If the pair is
+        already scheduled, the plan moves there instead. A start past the wait
+        limit widens it.
+      selector:
+        text:
+
+laundry_windows:
+  name: Laundry Windows
+  description: >
+    Look up the best times to run a set of laundry loads (flow names or single
+    cycles) over real + forecast rates, with average p/kWh and cost per window.
+    Read-only: changes no rows, plan or run. Returns a response.
+  fields:
+    loads:
+      name: Loads
+      description: >
+        Loads to wash together, e.g. ["Linen Bed Sheets", "Dark Clothes"].
+        Matched case-insensitively against the pair's Load options; a unique
+        partial match is accepted.
+      required: true
+      selector:
+        object:
+    pair:
+      name: Pair
+      description: Laundry pair slug or name. Optional when only one pair exists.
+      selector:
+        text:
